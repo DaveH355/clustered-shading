@@ -8,7 +8,7 @@ minimal intrusion.
 ![sponza_demo](img/sponza_demo2.png)
 ![flat_demo](img/flat_demo.png)
 *(top) 512 lights (bottom) 1024 lights | both scenes rendered using clustered deferred on an Intel CometLake-H GT2 iGPU @60 fps*
--------
+
 
 # Overview
 
