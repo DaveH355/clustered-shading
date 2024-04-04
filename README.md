@@ -31,7 +31,7 @@ in a [LearnOpenGL](https://learnopengl.com/) article.
 We'll be using OpenGL 4.3 and C++. I'll assume you have working knowledge of both.
 
 > [!TIP]
-> If you are viewing this in dark mode on Github, I recommend you try out light mode for easier reading.
+> If you are viewing this in dark mode on Github, I recommend you try out light mode high contrast for easier reading.
 > In dark mode, text can appear blurry to some. 
 
 
