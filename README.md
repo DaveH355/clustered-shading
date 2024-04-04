@@ -4,18 +4,11 @@ Clustered shading is a technique that allows for efficient rendering of
 thousands of dynamic lights in 3D perspective games. It can be integrated into both forward and deferred rendering pipelines with 
 minimal intrusion.
 
-The goal of this tutorial is to present clustered shading in a big picture way, while providing a simple, efficient,
-and easily adaptable implementation. 
-We'll be using OpenGL 4.3 and C++. I'll assume you have working knowledge of both.
-
-> [!TIP]
-> If you are viewing this in dark mode on Github, I recommend you try out light mode for easier reading.
-> In dark mode, text can appear blurry to some. 
-
-## Demo
-
-
----
+# Showcase
+![sponza_demo](img/sponza_demo2.png)
+![flat_demo](img/flat_demo.png)
+*(top) 512 lights (bottom) 1024 lights | both scenes rendered using clustered deferred on an Intel CometLake-H GT2 iGPU @60 fps*
+-------
 
 # Overview
 
@@ -34,6 +27,12 @@ Clustered shading can be thought of as the "natural evolution" to traditional dy
 technique. Since its introduction in 2012, Clustered shading has mostly stayed in the realm of research papers and behind the doors of big game studios. 
 My goal is to present a simple implementation with clear reasoning behind every decision. Something that might fit
 in a [LearnOpenGL](https://learnopengl.com/) article.
+
+We'll be using OpenGL 4.3 and C++. I'll assume you have working knowledge of both.
+
+> [!TIP]
+> If you are viewing this in dark mode on Github, I recommend you try out light mode for easier reading.
+> In dark mode, text can appear blurry to some. 
 
 
 ## Step 1: Splitting the view frustum into clusters
