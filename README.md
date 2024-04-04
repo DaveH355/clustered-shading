@@ -277,7 +277,11 @@ I encourage you to stop here and adapt this code into your game or engine and st
 We divide the screen into tiles and convert the points to view space sitting on the camera near plane. This
 essentially leaves us with a divided near plane. Then for each min and max point of a tile on the near plane, 
 we draw a line from the origin through that point and intersect it with the **_cluster's_** near and far planes. 
-The intersections together form the bound of the AABB.
+The intersection points together form the bound of the AABB.
+
+> [!NOTE] 
+> Converting the screen coords to view space on the near plane **relies** on the fact that by default in OpenGL, a depth of -1 in NDC corresponds to the near plane. 
+> If you are using a reverse Z buffer, the near plane would be 1. 
 
 And a few notes the C++ side:
 1. `glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);` ensures the writes to the SSBO (Shader Storage Buffer Object) by the compute shader are visible to the next shader.
