@@ -9,7 +9,6 @@ minimal intrusion.
 ![flat_demo](img/flat_demo.png)
 *(top) 512 lights (bottom) 1024 lights | both scenes rendered using clustered deferred on an Intel CometLake-H GT2 iGPU @60 fps*
 
-
 # Overview
 
 The "traditional" method for dynamic lighting is to loop over every light in the scene to
@@ -31,8 +30,8 @@ in a [LearnOpenGL](https://learnopengl.com/) article.
 We'll be using OpenGL 4.3 and C++. I'll assume you have working knowledge of both.
 
 > [!TIP]
-> If you are viewing this in dark mode on Github, I recommend you try out light mode high contrast for easier reading.
-> In dark mode, text can appear blurry to some. 
+> If you are viewing this in dark mode on Github, I recommend trying out light mode high contrast for easier reading.
+> In dark mode, text can appear blurry. 
 
 
 ## Step 1: Splitting the view frustum into clusters
@@ -558,14 +557,14 @@ void init()
 
 </details>
 
-Since each thread processes its own cluster and writes to its own part of the SSBO memory, we  don't need to use any shared memory or atomic operations!
-This keeps the compute shader as parallel as possible.
+The compute shader has 128 "threads" per workgroup. We dispatch 27 workgroups for a total of 3456 threads. 
+This is to fit the design of each thread processing a single cluster. Remember we have 12x12x24 = 3456 clusters. 
 
-> [!NOTE]
-> There are 128 threads per workgroup to keep each one busy. You can have any workgroup size (within [limitations](https://www.khronos.org/opengl/wiki/Compute_Shader#Limitations)), as long as you change your dispatch to match the total thread count
-> with the number of clusters.
-> If we have 12x12x24 = `3456 clusters`, then we need to dispatch 27 workgroups for a total of 3456 threads.
-> We also only use the x dimension of the compute shader to keep things simple.
+If you change anything, make sure to change your dispatch to match the total thread count
+with the number of clusters. 
+
+Also, since each thread processes its own cluster and writes to its own part of the SSBO memory, we  don't need to use any shared memory or atomic operations!
+This keeps the compute shader as parallel as possible.
 
 ## Step 3: Consumption in fragment shader
 
