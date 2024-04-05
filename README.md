@@ -74,12 +74,11 @@ So exponential division it is. We'll use the equation below which closely matche
 Z=\text{Near}_z\left(\frac{\text{Far}_z}{\text{Near}_z}\right)\Huge^{\frac{\text{slice}}{numslices}}
 ```
 
-- $Z$ is the positive distance from the camera position
 - $\text{Near}_z$ and $\text{Far}_z$ represent the near and far planes
 - $\text{slice}$ is the current slice index
 - $\text{numslices}$ is the total number of slices to divide with.
 
-This equation gives us the positive distance from the camera a slice should be.
+This equation gives us the positive Z depth from the camera a slice should be. Where $Z$ is some value between the near and far planes.  
 
 ### Cluster Dimensions
 
@@ -596,7 +595,7 @@ out vec4 FragColor;
 
 void main()
 {
-    //view space position of a fragment
+    //view space position of a fragment. Replace with your implementation
     vec3 FragPos = texture(gPosition, TexCoords).rgb;
 
     // Locating which cluster this fragment is part of
@@ -618,7 +617,7 @@ void main()
 ```
 
 Here FragPos is the view space position of the fragment.
-The absolute value of `FragPos.z` gives us the distance of the fragment from the camera.
+The absolute value of `FragPos.z` gives us the positive Z depth of the fragment from the camera.
 Remember, that's exactly the left hand side of the exponential equation from earlier.
 
 Solving that earlier equation for the slice results in the z index of the cluster.
