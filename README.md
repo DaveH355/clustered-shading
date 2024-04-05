@@ -636,7 +636,7 @@ If you are seeing flickering lights it could be either
 1. Your light is affecting fragments outside its defined radius. This causes uneven lighting. Try adding a range check to your attenuation.
 
 2. There are too many lights visible to a single cluster. Remember we hardcoded a max of 100 lights per cluster at any time. If this limit is hit, further lights
-   will be ignored and they will be unpredictable. This can happen at further out clusters, since the exponential division causes those clusters to be very large. 
+   will be ignored and they will become unpredictable. This can happen at further out clusters, since the exponential division causes those clusters to be very large. 
 
    **Solution:** Increase the light limit. The only cost is more GPU memory. You can also add a check in your lighting shader
    to output a warning color. 
@@ -684,7 +684,7 @@ in the view frustum. Frustum culling is fast and already standard in many games.
 ## Further Reading
 - [Clustered Deferred and Forward Shading - 2012](https://www.cse.chalmers.se/~uffe/clustered_shading_preprint.pdf): A research paper where
   clustered shading was first introduced.
-- [A Primer On Efficient Rendering Algorithms & Clustered Shading - 2018](http://www.aortiz.me/2018/12/21/CG.html) An excellent blog post on the subject. from which much of this tutorial is based on.
+- [A Primer On Efficient Rendering Algorithms & Clustered Shading - 2018](http://www.aortiz.me/2018/12/21/CG.html) An excellent blog post much of this tutorial is based on.
 - [Practical Clustered Shading - 2015](http://www.humus.name/Articles/PracticalClusteredShading.pdf) Presentation by Avalanche Studios
 - [Simple Alternative to Clustered Shading for Thousands of Lights - 2015](https://worldoffries.wordpress.com/2015/02/19/simple-alternative-to-clustered-shading-for-thousands-of-lights/) 
    Alternative to clustered shading by building a BVH and traversing it directly in the shading step. 
