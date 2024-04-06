@@ -561,9 +561,7 @@ void init()
 </details>
 
 The compute shader has 128 "threads" per workgroup. We dispatch 27 workgroups for a total of 3456 threads. 
-This is to fit the design of each thread processing a single cluster. Remember we have 12x12x24 = 3456 clusters. 
-
-If you change anything, make sure to change your dispatch to match the total thread count
+This is to fit the design of each thread processing a single cluster. Remember we have 12x12x24 = 3456 clusters. If you change anything, make sure to change your dispatch to match the total thread count
 with the number of clusters. 
 
 Also, since each thread processes its own cluster and writes to its own part of the SSBO memory, we  don't need to use any shared memory or atomic operations!
@@ -629,13 +627,13 @@ uint zTile = uint((log(abs(FragPos.z) / zNear) * gridSize.z) / log(zFar / zNear)
 Finding the xy index of the cluster is very simple. We have the screen coordinates of the fragment from`gl_FragCoord.xy`, we just need to divide by
 the tileSize. Again, this is the reverse of what the cluster compute shader does.
 
-## Troubleshooting
+## Common Problems
 
-If you are seeing flickering lights it could be either
+A common problem is flickering artifacts. This could be either:
 1. Your light is affecting fragments outside its defined radius. This causes uneven lighting. Try adding a range check to your attenuation.
 
-2. There are too many lights visible to a single cluster. Remember we hardcoded a max of 100 lights per cluster at any time. If this limit is hit, further lights
-   will be ignored and they will become unpredictable. This can happen at further out clusters, since the exponential division causes those clusters to be very large. 
+2. There are too many lights visible to a single cluster. Remember we hardcoded a max of 100 lights per cluster at any time. If this limit is hit, further intersecting lights
+   will be ignored and their assignment will become unpredictable. This can happen at further out clusters, since the exponential division causes those clusters to be very large. 
 
    **Solution:** Increase the light limit. The only cost is more GPU memory. You can also add a check in your lighting shader
    to output a warning color. 
