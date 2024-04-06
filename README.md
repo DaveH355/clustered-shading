@@ -60,10 +60,9 @@ But the optimization is optional. This step of clustered shading is usually very
 
 *uniform division (left) and exponential division (right)*
 
-There are two main ways to distribute the frustum along the depth. Uniform and exponential division.
+There are two main ways to distribute the frustum along the depth: uniform and exponential division.
 
-The exponential division lets us
-cover the same area with fewer divisions. And we generally don't care if this causes a lot of lights to
+The exponential division lets us cover the same area with fewer divisions. And we generally don't care if this causes a lot of lights to
 be assigned to those far out clusters. Less of an object appears on the screen the further out in perspective projection,
 and thus fewer fragments to shade.
 
@@ -308,14 +307,13 @@ And a few notes the C++ side:
    > If you are not storing an array of structures in `std430`, and as long as you [stay away from vec3](https://stackoverflow.com/q/38172696/19633924), you _probably_ don't need to worry about alignment.
 
 ## Step 2: Assigning Lights to Clusters (Culling)
-Our goal now is to cull the lights. The most common type of light used in games is the point light. A point light 
-has a position and radius which define a sphere of influence. 
+Our goal now is to cull the lights by assigning them to clusters based on the light influence. The most common type of light used in games is the point light. 
+A point light has a position and radius which define a sphere of influence. 
 
-We test the light sphere against a cluster AABB. 
-If the light intersects, it is visible to the cluster, and we append it to the cluster light list.
+We brute force test every light against every cluster. If there is an intersection between the sphere and AABB, the light is visible to the cluster, 
+and it is appended to the cluster's local list. 
 
-Let's dive into the Cluster struct.
-
+Let's look at the cluster struct. 
 ```glsl
   struct Cluster
   {
@@ -326,7 +324,7 @@ Let's dive into the Cluster struct.
   };
 ```
 
-- The min and max define the AABB of this cluster like from before.
+- The min and max define the AABB of this cluster like before.
 
 - `lightIndices` contains the lights visible to this cluster. We hardcode a max of 100 lights visible to a cluster at any time. You'll see this number used a few times elsewhere.
   If you want to increase the number, make sure to change it everywhere.
@@ -336,21 +334,19 @@ Let's dive into the Cluster struct.
 We'll use another compute shader to cull the lights. Compute shaders are just so awesome because they are general purpose. 
 They are great for parallel tasks. In our case, testing intersection of thousands of lights against thousands of clusters. 
 
-Let's have each invocation process a single cluster.
+Let's have each compute shader thread process a single cluster.
 
 <details>
-  <summary>What is an invocation?</summary>
+  <summary>Is it really called a thread?</summary>
     
-- Compute shaders have the abstract idea of a workgroup. Each workgroup has its own invocations (called workgroup size or local_size). 
-You can loosely think of invocations as threads. Each *thread* is an independent execution of the main function.
+-  Strictly speaking, no, compute shaders don't use the term "threads" like CPUs. Compute shaders have workgroups and invocations. Each workgroup has its own invocations (called workgroup size or local_size).
+   Each invocation is an independent execution of the main function. But it's helpful to think of invocations as threads. 
+
+   Read more about compute shaders on the [OpenGL Wiki](https://www.khronos.org/opengl/wiki/Compute_Shader).
 
 </details>
 
-For each cluster, we loop over all the lights in the scene and test intersection with the cluster AABB.
-If there is intersection, the light must be visible to the cluster. It is added to the lightIndices array.
-
-And here is the full compute shader
-
+## Implementation
 <details open>
 <summary>GLSL</summary>
 
