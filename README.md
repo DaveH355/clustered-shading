@@ -238,7 +238,7 @@ void init_ssbos()
     // comp shader builds the AABBs.
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Cluster) * numClusters,
                  nullptr, GL_STATIC_COPY);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, clusterGridSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, clusterGridSSBO);
   }
 }
 
@@ -517,7 +517,7 @@ void init_ssbos()
     // comp shader builds the AABBs.
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Cluster) * numClusters,
                  nullptr, GL_STATIC_COPY);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, clusterGridSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, clusterGridSSBO);
   }
 }
 
