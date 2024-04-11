@@ -23,7 +23,7 @@ What if we could just loop over the lights we know will affect a given fragment?
 > This increases efficiency by only considering lights that are very likely to affect the fragment.
 
 Clustered shading can be thought of as the "natural evolution" to traditional dynamic lighting. It's not a super well known
-technique. Since its introduction in 2012, Clustered shading has mostly stayed in the realm of research papers and behind the doors of big game studios. 
+technique. Since its introduction in 2012, clustered shading has mostly stayed in the realm of research papers and behind the doors of big game studios. 
 My goal is to present a simple implementation with clear reasoning behind every decision. Something that might fit
 in a [LearnOpenGL](https://learnopengl.com/) article.
 
@@ -215,6 +215,7 @@ namespace Compute
 constexpr unsigned int gridSizeX = 12;
 constexpr unsigned int gridSizeY = 12;
 constexpr unsigned int gridSizeZ = 24;
+constexpr unsigned int numClusters = gridSizeX * gridSizeY * gridSizeZ;
 
 struct alignas(16) Cluster
 {
@@ -493,6 +494,7 @@ namespace Compute
 constexpr unsigned int gridSizeX = 12;
 constexpr unsigned int gridSizeY = 12;
 constexpr unsigned int gridSizeZ = 24;
+constexpr unsigned int numClusters = gridSizeX * gridSizeY * gridSizeZ;
 
 struct alignas(16) Cluster
 {
