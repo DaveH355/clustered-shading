@@ -30,7 +30,7 @@ in a [LearnOpenGL](https://learnopengl.com/) article.
 We'll be using OpenGL 4.3 and C++. I'll assume you have working knowledge of both.
 
 > [!TIP]
-> If you are viewing this in dark mode on Github, I recommend trying out light mode high contrast for easier reading.
+> If you are viewing this in dark mode on GitHub, I recommend trying out light mode high contrast for easier reading.
 > In dark mode, text can appear blurry. 
 
 
@@ -42,7 +42,7 @@ We'll be using OpenGL 4.3 and C++. I'll assume you have working knowledge of bot
 
 *The view frustum and camera position (center of projection) form a pyramid like shape*
 
-The definition of the view frustum is the space between the `zNear` and `ZFar` planes. This is the part the camera can "see". Shading is only done
+The definition of the view frustum is the space between the `zNear` and `zFar` planes. This is the part the camera can "see". Shading is only done
 on fragments that are in the frustum.
 
 Our goal is to divide this volume into a 3D grid of clusters. We'll define the clusters in view space so
@@ -63,8 +63,8 @@ But the optimization is optional. This step of clustered shading is usually very
 There are two main ways to distribute the frustum along the depth: uniform and exponential division.
 
 The exponential division lets us cover the same area with fewer divisions. And we generally don't care if this causes a lot of lights to
-be assigned to those far out clusters. Less of an object appears on the screen the further out in perspective projection,
-and thus fewer fragments to shade.
+be assigned to those far out clusters. Because less of an object appears on the screen the further out in perspective projection,
+there are fewer fragments to shade.
 
 So exponential division it is. We'll use the equation below which closely matches the image on the left.
 
@@ -81,7 +81,7 @@ This equation gives us the positive Z depth from the camera a slice should be. W
 
 ### Cluster Dimensions
 
-In adition to slicing the frustum along the depth, we also need to divide each slice on the xy axis.
+In addition to slicing the frustum along the depth, we also need to divide each slice on the xy axis.
 What subdivision scheme to use is up to you. If your near and far planes are very far apart, you'll want more depth slices.
 
 A good place to start is 16x9x24 (x, y, z-depth) which is what [DOOM 2016](https://advances.realtimerendering.com/s2016/Siggraph2016_idTech6.pdf) uses.
@@ -340,7 +340,7 @@ Let's have each compute shader thread process a single cluster.
 <details>
   <summary>Is it really called a thread?</summary>
     
--  Strictly speaking, no, compute shaders don't use the term "threads" like CPUs. Compute shaders have workgroups and invocations. Each workgroup has its own invocations (called workgroup size or local_size).
+-  Strictly speaking, no, compute shaders don't use the term "thread" like CPUs. Compute shaders have workgroups and invocations. Each workgroup has its own invocations (called workgroup size or local_size).
    Each invocation is an independent execution of the main function. But it's helpful to think of invocations as threads. 
 
    Read more about compute shaders on the [OpenGL Wiki](https://www.khronos.org/opengl/wiki/Compute_Shader).
