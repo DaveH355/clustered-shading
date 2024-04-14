@@ -1,10 +1,11 @@
 # Clustered Shading
 
 Clustered shading is a technique that allows for efficient rendering of
-thousands of dynamic lights in 3D perspective games. It can be integrated into both forward and deferred rendering pipelines with 
+thousands of dynamic lights in 3D perspective games. It can be integrated into both forward and deferred rendering pipelines with
 minimal intrusion.
 
 # Showcase
+
 ![sponza_demo](img/sponza_demo2.png)
 ![flat_demo](img/flat_demo.png)
 *(top) 512 lights (bottom) 1024 lights | both scenes rendered using clustered deferred on an Intel CometLake-H GT2 iGPU @60 fps*
@@ -23,7 +24,7 @@ What if we could just loop over the lights we know will affect a given fragment?
 > This increases efficiency by only considering lights that are very likely to affect the fragment.
 
 Clustered shading can be thought of as the "natural evolution" to traditional dynamic lighting. It's not a super well known
-technique. Since its introduction in 2012, clustered shading has mostly stayed in the realm of research papers and behind the doors of big game studios. 
+technique. Since its introduction in 2012, clustered shading has mostly stayed in the realm of research papers and behind the doors of big game studios.
 My goal is to present a simple implementation with clear reasoning behind every decision. Something that might fit
 in a [LearnOpenGL](https://learnopengl.com/) article.
 
@@ -31,8 +32,7 @@ We'll be using OpenGL 4.3 and C++. I'll assume you have working knowledge of bot
 
 > [!TIP]
 > If you are viewing this in dark mode on GitHub, I recommend trying out light mode high contrast for easier reading.
-> In dark mode, text can appear blurry. 
-
+> In dark mode, text can appear blurry.
 
 ## Step 1: Splitting the view frustum into clusters
 
@@ -85,7 +85,7 @@ In addition to slicing the frustum along the depth, we also need to divide each 
 What subdivision scheme to use is up to you. If your near and far planes are very far apart, you'll want more depth slices.
 
 A good place to start is 16x9x24 (x, y, z-depth) which is what [DOOM 2016](https://advances.realtimerendering.com/s2016/Siggraph2016_idTech6.pdf) uses.
-I personally use 12x12x24 to show the division scheme can be anything you choose. 
+I personally use 12x12x24 to show the division scheme can be anything you choose.
 
 ### Cluster shape
 
@@ -274,15 +274,16 @@ void init()
 I encourage you to stop here and adapt this code into your game or engine and study it! See if you can spot the exponential formula from earlier.
 
 We divide the screen into tiles and convert the points to view space sitting on the camera near plane. This
-essentially leaves us with a divided near plane. Then for each min and max point of a tile on the near plane, 
-we draw a line from the origin through that point and intersect it with the **_cluster's_** near and far planes. 
+essentially leaves us with a divided near plane. Then for each min and max point of a tile on the near plane,
+we draw a line from the origin through that point and intersect it with the ***cluster's*** near and far planes.
 The intersection points together form the bound of the AABB.
 
-> [!NOTE] 
-> Converting the screen coords to view space on the near plane **relies** on the fact that by default in OpenGL, a depth of -1 in NDC corresponds to the near plane. 
-> If you are using a reverse Z buffer, the near plane would be 1. 
+> [!NOTE]
+> Converting the screen coords to view space on the near plane **relies** on the fact that by default in OpenGL, a depth of -1 in NDC corresponds to the near plane.
+> If you are using a reverse Z buffer, the near plane would be 1.
 
-And a few notes the C++ side:
+And a few notes on the C++ side:
+
 1. `glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);` ensures the writes to the SSBO (Shader Storage Buffer Object) by the compute shader are visible to the next shader.
 
 2. `alignas(16)` is used to correctly match the C++ struct memory layout with how the SSBO expects it.
@@ -305,16 +306,18 @@ And a few notes the C++ side:
    We basically need to add padding bytes to make the total struct size a multiple of 16 bytes.
    We can manually add some dummy variables or let the compiler handle it with `alignas`.
 
-   > If you are not storing an array of structures in `std430`, and as long as you [stay away from vec3](https://stackoverflow.com/q/38172696/19633924), you _probably_ don't need to worry about alignment.
+   > If you are not storing an array of structures in `std430`, and as long as you [stay away from vec3](https://stackoverflow.com/q/38172696/19633924), you *probably* don't need to worry about alignment.
 
 ## Step 2: Assigning Lights to Clusters (Culling)
-Our goal now is to cull the lights by assigning them to clusters based on the light influence. The most common type of light used in games is the point light. 
-A point light has a position and radius which define a sphere of influence. 
 
-We brute force test every light against every cluster. If there is an intersection between the sphere and AABB, the light is visible to the cluster, 
-and it is appended to the cluster's local list. 
+Our goal now is to cull the lights by assigning them to clusters based on the light influence. The most common type of light used in games is the point light.
+A point light has a position and radius which define a sphere of influence.
 
-Let's look at the cluster struct. 
+We brute force test every light against every cluster. If there is an intersection between the sphere and AABB, the light is visible to the cluster,
+and it is appended to the cluster's local list.
+
+Let's look at the cluster struct.
+
 ```glsl
   struct Cluster
   {
@@ -332,22 +335,23 @@ Let's look at the cluster struct.
 
 - `count` keeps tracks of how many lights are visible. It tells how much to read from the `lightIndices` array.
 
-We'll use another compute shader to cull the lights. Compute shaders are just so awesome because they are general purpose. 
-They are great for parallel tasks. In our case, testing intersection of thousands of lights against thousands of clusters. 
+We'll use another compute shader to cull the lights. Compute shaders are just so awesome because they are general purpose.
+They are great for parallel tasks. In our case, testing intersection of thousands of lights against thousands of clusters.
 
 Let's have each compute shader thread process a single cluster.
 
 <details>
   <summary>Is it really called a thread?</summary>
-    
--  Strictly speaking, no, compute shaders don't use the term "thread" like CPUs. Compute shaders have workgroups and invocations. Each workgroup has its own invocations (called workgroup size or local_size).
-   Each invocation is an independent execution of the main function. But it's helpful to think of invocations as threads. 
+
+- Strictly speaking, no, compute shaders don't use the term "thread" like CPUs. Compute shaders have workgroups and invocations. Each workgroup has its own invocations (called workgroup size or local_size).
+   Each invocation is an independent execution of the main function. But it's helpful to think of invocations as threads.
 
    Read more about compute shaders on the [OpenGL Wiki](https://www.khronos.org/opengl/wiki/Compute_Shader).
 
 </details>
 
 ## Implementation
+
 <details open>
 <summary>GLSL</summary>
 
@@ -439,7 +443,7 @@ But the following suits the basic purpose.
 <details>
 <summary>C++</summary>
 
-The important part is to create and fill the light SSBO. Note the use of `alignas` in the PointLight struct definition. 
+The important part is to create and fill the light SSBO. Note the use of `alignas` in the PointLight struct definition.
 
 ```cpp
 struct alignas(16) PointLight
@@ -488,6 +492,7 @@ int main()
 }
 
 ```
+
 ```cpp
 namespace Compute
 {
@@ -558,11 +563,11 @@ void init()
 
 </details>
 
-The compute shader has 128 "threads" per workgroup. We dispatch 27 workgroups for a total of 3456 threads. 
+The compute shader has 128 "threads" per workgroup. We dispatch 27 workgroups for a total of 3456 threads.
 This is to fit the design of each thread processing a single cluster. Remember we have 12x12x24 = 3456 clusters. If you change anything, make sure to change your dispatch to match the total thread count
-with the number of clusters. 
+with the number of clusters.
 
-Also, since each thread processes its own cluster and writes to its own part of the SSBO memory, we  don't need to use any shared memory or atomic operations!
+Also, since each thread processes its own cluster and writes to its own part of the SSBO memory, we don't need to use any shared memory or atomic operations!
 This keeps the compute shader as parallel as possible.
 
 ## Step 3: Consumption in fragment shader
@@ -628,13 +633,15 @@ the tileSize. Again, this is the reverse of what the cluster compute shader does
 ## Common Problems
 
 A common problem is flickering artifacts. This could be either:
+
 1. Your light is affecting fragments outside its defined radius. This causes uneven lighting. Try adding a range check to your attenuation.
 
 2. There are too many lights visible to a single cluster. Remember we hardcoded a max of 100 lights per cluster at any time. If this limit is hit, further intersecting lights
-   will be ignored and their assignment will become unpredictable. This can happen at further out clusters, since the exponential division causes those clusters to be very large. 
+   will be ignored, and their assignment will become unpredictable. This can happen at further out clusters, since the exponential division causes those clusters to be very large.
 
    **Solution:** Increase the light limit. The only cost is more GPU memory. You can also add a check in your lighting shader
-   to output a warning color. 
+   to output a warning color.
+
    ```glsl
     uint lightCount = clusters[tileIndex].count;
     if (lightCount > 95) {
@@ -644,45 +651,46 @@ A common problem is flickering artifacts. This could be either:
     }
    ```
 
-
 ## Benchmarks
 
-The following benchmarks were measured using `glFinish()` and regular C++ clocks on 
+The following benchmarks were measured using `glFinish()` and regular C++ clocks on
 my linux machine using an Intel CometLake-H GT2. I found the integrated gpu results were more in line with what I expected.
-It also shows the competitiveness of the algorithm on low-end hardware. 
+It also shows the competitiveness of the algorithm on low-end hardware.
 
-The scene uses cluster shading with deferred rendering **without** any optimizations like frustum culling. 
+The scene uses cluster shading with deferred rendering **without** any optimizations like frustum culling.
+
 - 12x12x24 cluster grid
 - Camera near and far planes (0.1, 400)
 - Light XZ positions allowed to range (-100, 100) and vertical Y (0, 55)
 - 1920x1080 resolution
 - Sponza model
 
-
-| -                   | Building Clusters | Light Assignment | Shading | 
+| -                   | Building Clusters | Light Assignment | Shading |
 |---------------------|-------------------|------------------|---------|
 | 512 lights (13.0f)  | 0.28 ms           | 0.95 ms          | 5.23 ms |
-| 1,024 lights (7.0f) | 0.27 ms           | 1.50 ms          | 3.71 ms | 
-| 2,048 lights (3.0f) | 0.42 ms           | 2.61 ms          | 2.84 ms | 
-| 4,096 lights (2.0f) | 0.29 ms           | 5.15 ms          | 3.28 ms | 
+| 1,024 lights (7.0f) | 0.27 ms           | 1.50 ms          | 3.71 ms |
+| 2,048 lights (3.0f) | 0.42 ms           | 2.61 ms          | 2.84 ms |
+| 4,096 lights (2.0f) | 0.29 ms           | 5.15 ms          | 3.28 ms |
 
 ### Optimization
-The benchmarks show constructing the cluster grid takes constant time, while shading perf. is largely affected by light radius.
-However, a bottleneck starts to appear in assigning lights to clusters. This makes sense since we are brute force testing every light against every cluster. We need some way to reduce the number of lights being tested. 
+
+The benchmarks show constructing the cluster grid takes constant time, while shading perf is largely affected by light radius.
+However, a bottleneck starts to appear in assigning lights to clusters. This makes sense since we are brute force testing every light against every cluster. We need some way to reduce the number of lights being tested.
 
 One way is to build a BVH (Bounding Volume Hierarchy) over the lights and traverse it in the culling step. This
 can produce good results, but IMO it overcomplicates things. Clustered shading is already an optimization technique, and I have doubts about spiraling into a rabbit hole of optimizing the optimizers.
 
 The easiest solution here is to frustum cull the lights and update the light SSBO every frame. Thus, we only test lights that are
-in the view frustum. Frustum culling is fast and already standard in many games. 
+in the view frustum. Frustum culling is fast and already standard in many games.
 
 ## Further Reading
+
 - [Clustered Deferred and Forward Shading - 2012](https://www.cse.chalmers.se/~uffe/clustered_shading_preprint.pdf): A research paper where
   clustered shading was first introduced.
 - [A Primer On Efficient Rendering Algorithms & Clustered Shading - 2018](http://www.aortiz.me/2018/12/21/CG.html) An excellent blog post much of this tutorial is based on.
 - [Practical Clustered Shading - 2015](http://www.humus.name/Articles/PracticalClusteredShading.pdf) Presentation by Avalanche Studios
-- [Simple Alternative to Clustered Shading for Thousands of Lights - 2015](https://worldoffries.wordpress.com/2015/02/19/simple-alternative-to-clustered-shading-for-thousands-of-lights/) 
-   Alternative to clustered shading by building a BVH and traversing it directly in the shading step. 
+- [Simple Alternative to Clustered Shading for Thousands of Lights - 2015](https://worldoffries.wordpress.com/2015/02/19/simple-alternative-to-clustered-shading-for-thousands-of-lights/)
+   Alternative to clustered shading by building a BVH and traversing it directly in the shading step.
 
 -----------
 *Questions, typos, or corrections? Feel free to open an issue or pull request!*
