@@ -350,7 +350,7 @@ Let's have each compute shader thread process a single cluster.
 
 </details>
 
-## Implementation
+### Implementation
 
 <details open>
 <summary>GLSL</summary>
