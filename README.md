@@ -32,7 +32,7 @@ We'll be using OpenGL 4.3 and C++. I'll assume you have working knowledge of bot
 
 > [!TIP]
 > If you are viewing this in dark mode on GitHub, I recommend trying out light mode high contrast for easier reading.
-> In dark mode, text can appear blurry.
+> Text can appear blurry in dark mode.
 
 ## Step 1: Splitting the view frustum into clusters
 
@@ -45,11 +45,7 @@ We'll be using OpenGL 4.3 and C++. I'll assume you have working knowledge of bot
 The definition of the view frustum is the space between the `zNear` and `zFar` planes. This is the part the camera can "see". Shading is only done
 on fragments that are in the frustum.
 
-Our goal is to divide this volume into a 3D grid of clusters. We'll define the clusters in view space so
-they are always relative to where the camera is. This allows for a small optimization: we can build the cluster grid sporadically instead of every frame.
-It only needs to be rebuilt when the projection matrix changes. Such as when near/far planes, fov, or screen dimensions change.
-
-But the optimization is optional. This step of clustered shading is usually very fast.
+Our goal is to divide this volume into a 3D grid of clusters. We'll define the clusters in view space so they are always relative to where the camera is.
 
 ### Dvision Scheme
 
@@ -134,7 +130,7 @@ uniform float zFar;
 
 uniform mat4 inverseProjection;
 uniform uvec3 gridSize;
-uniform uvec2 screenDimensions; // framebuffer pixel dimensions to be exact
+uniform uvec2 screenDimensions;
 
 vec3 screenToView(vec2 screenCoord);
 vec3 lineIntersectionWithZPlane(vec3 startPoint, vec3 endPoint, float zDistance);
@@ -144,8 +140,8 @@ void main()
     // Eye position is zero in view space
     const vec3 eyePos = vec3(0.0);
 
-    uint tileIndex = gl_WorkGroupID.x + gl_WorkGroupID.y * gridSize.x +
-            gl_WorkGroupID.z * gridSize.x * gridSize.y;
+    uint tileIndex = gl_WorkGroupID.x + (gl_WorkGroupID.y * gridSize.x) +
+            (gl_WorkGroupID.z * gridSize.x * gridSize.y);
     vec2 tileSize = screenDimensions / gridSize.xy;
 
     // calculate the min and max points of a tile in screen space
@@ -161,7 +157,7 @@ void main()
     float tileFar =
         zNear * pow(zFar / zNear, (gl_WorkGroupID.z + 1) / float(gridSize.z));
 
-    // Find the 4 intersection points from the min/max points to this cluster's
+    // Find the 4 intersection points from a tile's min/max points to this cluster's
     // near and far planes
     vec3 minPointNear =
         lineIntersectionWithZPlane(eyePos, minPoint_viewSpace, tileNear);
@@ -194,12 +190,12 @@ vec3 lineIntersectionWithZPlane(vec3 startPoint, vec3 endPoint, float zDistance)
 vec3 screenToView(vec2 screenCoord)
 {
     // normalize screenCoord to [-1, 1] and
-    // set the depth of the coordinate to be on the near plane. This is -1 by
-    // default in OpenGL.
+    // set the NDC depth of the coordinate to be on the near plane. This is -1 by
+    // default in OpenGL
     vec4 ndc = vec4(screenCoord / screenDimensions * 2.0 - 1.0, -1.0, 1.0);
 
     vec4 viewCoord = inverseProjection * ndc;
-    viewCoord = viewCoord / viewCoord.w;
+    viewCoord /= viewCoord.w;
     return viewCoord.xyz;
 }
 ```
@@ -279,8 +275,7 @@ we draw a line from the origin through that point and intersect it with the ***c
 The intersection points together form the bound of the AABB.
 
 > [!NOTE]
-> Converting the screen coords to view space on the near plane **relies** on the fact that by default in OpenGL, a depth of -1 in NDC corresponds to the near plane.
-> If you are using a reverse Z buffer, the near plane would be 1.
+> screenDimensions is more accurately thought of as the current dimensions of glViewport. 
 
 And a few notes on the C++ side:
 
@@ -387,9 +382,9 @@ layout(std430, binding = 2) restrict buffer lightSSBO
     PointLight pointLight[];
 };
 
-bool testSphereAABB(uint i, Cluster c);
-
 uniform mat4 viewMatrix;
+
+bool testSphereAABB(uint i, Cluster c);
 
 //note: tiles actually mean clusters
 void main()
@@ -665,7 +660,7 @@ The scene uses cluster shading with deferred rendering **without** any optimizat
 - 1920x1080 resolution
 - Sponza model
 
-| -                   | Building Clusters | Light Assignment | Shading |
+|                     | Building Clusters | Light Assignment | Shading |
 |---------------------|-------------------|------------------|---------|
 | 512 lights (13.0f)  | 0.28 ms           | 0.95 ms          | 5.23 ms |
 | 1,024 lights (7.0f) | 0.27 ms           | 1.50 ms          | 3.71 ms |
@@ -685,7 +680,7 @@ in the view frustum. Frustum culling is fast and already standard in many games.
 
 ## Further Reading
 
-- [Clustered Deferred and Forward Shading - 2012](https://www.cse.chalmers.se/~uffe/clustered_shading_preprint.pdf): A research paper where
+- [Clustered Deferred and Forward Shading - 2012](https://www.cse.chalmers.se/~uffe/clustered_shading_preprint.pdf) A research paper where
   clustered shading was first introduced.
 - [A Primer On Efficient Rendering Algorithms & Clustered Shading - 2018](http://www.aortiz.me/2018/12/21/CG.html) An excellent blog post much of this tutorial is based on.
 - [Practical Clustered Shading - 2015](http://www.humus.name/Articles/PracticalClusteredShading.pdf) Presentation by Avalanche Studios
