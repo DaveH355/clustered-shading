@@ -275,7 +275,7 @@ we draw a line from the origin through that point and intersect it with the ***c
 The intersection points together form the bound of the AABB.
 
 > [!NOTE]
-> screenDimensions is more accurately thought of as the current dimensions of glViewport. 
+> screenDimensions is more accurately thought of as the dimensions of glViewport, under which, lighting will be done. 
 
 And a few notes on the C++ side:
 
