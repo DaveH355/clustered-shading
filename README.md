@@ -386,12 +386,12 @@ uniform mat4 viewMatrix;
 
 bool testSphereAABB(uint i, Cluster c);
 
-//note: tiles actually mean clusters
+// each invocation of main() is a thread processing a cluster
 void main()
 {
     uint lightCount = pointLight.length();
-    uint tileIndex = gl_WorkGroupID.x * LOCAL_SIZE + gl_LocalInvocationID.x;
-    Cluster cluster = clusters[tileIndex];
+    uint index = gl_WorkGroupID.x * LOCAL_SIZE + gl_LocalInvocationID.x;
+    Cluster cluster = clusters[index];
 
     // we need to reset count because culling runs every frame.
     // otherwise it would accumulate.
@@ -405,7 +405,7 @@ void main()
             cluster.count++;
         }
     }
-    clusters[tileIndex] = cluster;
+    clusters[index] = cluster;
 }
 
 bool sphereAABBIntersection(vec3 center, float radius, vec3 aabbMin, vec3 aabbMax)
