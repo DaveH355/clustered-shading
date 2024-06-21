@@ -12,8 +12,8 @@ minimal intrusion.
 
 # Overview
 
-The "traditional" method for dynamic lighting is to loop over every light in the scene to
-shade a single fragment. But this is a huge limitation as there can be millions of fragments to shade on a modern display.
+The traditional method for dynamic lighting is to loop over every light in the scene to
+shade a single fragment. This is a huge performance limitation as there can be millions of fragments to shade on a modern display.
 
 What if we could just loop over the lights we know will affect a given fragment? Enter clustered shading.
 
@@ -23,8 +23,8 @@ What if we could just loop over the lights we know will affect a given fragment?
 > visible to the cluster. Then in the shading step, a fragment retrieves the light list for the cluster it's in.
 > This increases efficiency by only considering lights that are very likely to affect the fragment.
 
-Clustered shading can be thought of as the "natural evolution" to traditional dynamic lighting. It's not a super well known
-technique. Since its introduction in 2012, clustered shading has mostly stayed in the realm of research papers and behind the doors of big game studios.
+Clustered shading can be thought of as the natural evolution to traditional dynamic lighting. It's not a super well known
+technique. Since its [introduction](https://www.cse.chalmers.se/~uffe/clustered_shading_preprint.pdf) in 2012, clustered shading has mostly stayed in the realm of research papers and behind the doors of big game studios.
 My goal is to present a simple implementation with clear reasoning behind every decision. Something that might fit
 in a [LearnOpenGL](https://learnopengl.com/) article.
 
@@ -45,9 +45,9 @@ We'll be using OpenGL 4.3 and C++. I'll assume you have working knowledge of bot
 The definition of the view frustum is the space between the `zNear` and `zFar` planes. This is the part the camera can "see". Shading is only done
 on fragments that are in the frustum.
 
-Our goal is to divide this volume into a 3D grid of clusters. We'll define the clusters in view space so they are always relative to where the camera is.
+**Our goal is to divide this volume into a 3D grid of clusters.** We'll define the clusters in view space so they are always relative to where the camera is.
 
-### Dvision Scheme
+### Dvision Scheme (Z)
 
 <p align="middle">
   <img src="img/UniformVS.png"/>
@@ -56,7 +56,7 @@ Our goal is to divide this volume into a 3D grid of clusters. We'll define the c
 
 *uniform division (left) and exponential division (right)*
 
-There are two main ways to distribute the frustum along the depth: uniform and exponential division.
+There are two main ways to divide the frustum along the depth: uniform and exponential division.
 
 The exponential division lets us cover the same area with fewer divisions. And we generally don't care if this causes a lot of lights to
 be assigned to those far out clusters. Because less of an object appears on the screen the further out in perspective projection,
@@ -75,9 +75,9 @@ Z=\text{Near}_z\left(\frac{\text{Far}_z}{\text{Near}_z}\right)\Huge^{\frac{\text
 
 This equation gives us the positive Z depth from the camera a slice should be. Where $Z$ is some value between the near and far planes.  
 
-### Cluster Dimensions
+### Division Scheme (XY)
 
-In addition to slicing the frustum along the depth, we also need to divide each slice on the xy axis.
+In addition to slicing the frustum along the depth, we also need to divide on the xy axis.
 What subdivision scheme to use is up to you. If your near and far planes are very far apart, you'll want more depth slices.
 
 A good place to start is 16x9x24 (x, y, z-depth) which is what [DOOM 2016](https://advances.realtimerendering.com/s2016/Siggraph2016_idTech6.pdf) uses.
