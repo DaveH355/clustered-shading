@@ -62,7 +62,7 @@ The exponential division lets us cover the same area with fewer divisions. And w
 be assigned to those far out clusters. Because less of an object appears on the screen the further out in perspective projection,
 there are fewer fragments to shade.
 
-So exponential division it is. We'll use the equation below which closely matches the image on the left.
+So exponential division it is. We'll use the equation below which closely matches the image on the right.
 
 ```math
 \LARGE
