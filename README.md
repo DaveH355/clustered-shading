@@ -32,7 +32,7 @@ We'll be using OpenGL 4.3 and C++. I'll assume you have working knowledge of bot
 
 > [!TIP]
 > If you are viewing this in dark mode on GitHub, I recommend trying out light mode high contrast for easier reading.
-> Text can appear blurry in dark mode.
+> Text can appear blurry to the eye in dark mode.
 
 ## Step 1: Splitting the view frustum into clusters
 
@@ -42,8 +42,8 @@ We'll be using OpenGL 4.3 and C++. I'll assume you have working knowledge of bot
 
 *The view frustum and camera position (center of projection) form a pyramid like shape*
 
-The definition of the view frustum is the space between the `zNear` and `zFar` planes. This is the part the camera can "see". Shading is only done
-on fragments that are in the frustum.
+The definition of the view frustum is the space between the `zNear` and `zFar` planes. This is the part of the world the camera can "see". Shading is only done
+on fragments that end up in the frustum.
 
 **Our goal is to divide this volume into a 3D grid of clusters.** We'll define the clusters in view space so they are always relative to where the camera is.
 
@@ -135,44 +135,44 @@ uniform uvec2 screenDimensions;
 vec3 screenToView(vec2 screenCoord);
 vec3 lineIntersectionWithZPlane(vec3 startPoint, vec3 endPoint, float zDistance);
 
+/*
+ context: glViewport is referred to as the "screen"
+ clusters are built based on a 2d screen-space grid and depth slices.
+ Later when shading, it is easy to figure what cluster a fragment is in based on
+ gl_FragCoord.xy and the fragment's z depth from camera
+*/
 void main()
 {
-    // Eye position is zero in view space
-    const vec3 eyePos = vec3(0.0);
-
     uint tileIndex = gl_WorkGroupID.x + (gl_WorkGroupID.y * gridSize.x) +
             (gl_WorkGroupID.z * gridSize.x * gridSize.y);
     vec2 tileSize = screenDimensions / gridSize.xy;
 
-    // calculate the min and max points of a tile in screen space
-    vec2 minPoint_screenSpace = gl_WorkGroupID.xy * tileSize;
-    vec2 maxPoint_screenSpace = (gl_WorkGroupID.xy + 1) * tileSize;
+    // tile in screen-space
+    vec2 minTile_screenspace = gl_WorkGroupID.xy * tileSize;
+    vec2 maxTile_screenspace = (gl_WorkGroupID.xy + 1) * tileSize;
 
-    // convert them to view space sitting on the near plane
-    vec3 minPoint_viewSpace = screenToView(minPoint_screenSpace);
-    vec3 maxPoint_viewSpace = screenToView(maxPoint_screenSpace);
+    // convert tile to view space sitting on the near plane
+    vec3 minTile = screenToView(minTile_screenspace);
+    vec3 maxTile = screenToView(maxTile_screenspace);
 
-    float tileNear =
+    float planeNear =
         zNear * pow(zFar / zNear, gl_WorkGroupID.z / float(gridSize.z));
-    float tileFar =
+    float planeFar =
         zNear * pow(zFar / zNear, (gl_WorkGroupID.z + 1) / float(gridSize.z));
 
-    // Find the 4 intersection points from a tile's min/max points to this cluster's
-    // near and far planes
+    // the line goes from the eye position in view space (0, 0, 0)
+    // through the min/max points of a tile to intersect with a given cluster's near-far planes
     vec3 minPointNear =
-        lineIntersectionWithZPlane(eyePos, minPoint_viewSpace, tileNear);
+        lineIntersectionWithZPlane(vec3(0, 0, 0), minTile, planeNear);
     vec3 minPointFar =
-        lineIntersectionWithZPlane(eyePos, minPoint_viewSpace, tileFar);
+        lineIntersectionWithZPlane(vec3(0, 0, 0), minTile, planeFar);
     vec3 maxPointNear =
-        lineIntersectionWithZPlane(eyePos, maxPoint_viewSpace, tileNear);
+        lineIntersectionWithZPlane(vec3(0, 0, 0), maxTile, planeNear);
     vec3 maxPointFar =
-        lineIntersectionWithZPlane(eyePos, maxPoint_viewSpace, tileFar);
+        lineIntersectionWithZPlane(vec3(0, 0, 0), maxTile, planeFar);
 
-    vec3 minPointAABB = min(minPointNear, minPointFar);
-    vec3 maxPointAABB = max(maxPointNear, maxPointFar);
-
-    clusters[tileIndex].minPoint = vec4(minPointAABB, 0.0);
-    clusters[tileIndex].maxPoint = vec4(maxPointAABB, 0.0);
+    clusters[tileIndex].minPoint = vec4(min(minPointNear, minPointFar), 0.0);
+    clusters[tileIndex].maxPoint = vec4(max(maxPointNear, maxPointFar), 0.0);
 }
 
 // Returns the intersection point of an infinite line and a
